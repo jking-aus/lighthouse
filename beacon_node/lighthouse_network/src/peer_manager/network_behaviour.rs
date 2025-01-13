@@ -211,7 +211,6 @@ impl<E: EthSpec> NetworkBehaviour for PeerManager<E> {
 
         // We have an inbound connection, this is indicative of having our libp2p NAT ports open.
         // We now need to check if we have enough open connections to consider our NAT open.
-        // This function distinguishes between ipv4 and ipv6.
         self.update_nat_open_metric(&ConnectedPoint::Listener {
             send_back_addr: remote_addr.clone(),
             local_addr: _local_addr.clone(),
@@ -293,7 +292,6 @@ impl<E: EthSpec> PeerManager<E> {
         endpoint: &ConnectedPoint,
         remaining_established: usize,
     ) {
-        self.update_nat_open_metric(endpoint);
         if remaining_established > 0 {
             return;
         }
@@ -324,6 +322,7 @@ impl<E: EthSpec> PeerManager<E> {
             // Legacy standard metrics.
             metrics::inc_counter(&metrics::PEER_DISCONNECT_EVENT_COUNT);
 
+            self.update_nat_open_metric(endpoint);
             self.update_peer_count_metrics();
         }
     }

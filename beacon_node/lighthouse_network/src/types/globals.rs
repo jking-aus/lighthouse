@@ -33,9 +33,6 @@ pub struct NetworkGlobals<E: EthSpec> {
     pub config: Arc<NetworkConfig>,
     /// Ethereum chain configuration. Immutable after initialization.
     pub spec: Arc<ChainSpec>,
-    /// Counts the number of connected peers.
-    pub connected_ipv4_peers: RwLock<usize>,
-    pub connected_ipv6_peers: RwLock<usize>,
 }
 
 impl<E: EthSpec> NetworkGlobals<E> {
@@ -88,8 +85,6 @@ impl<E: EthSpec> NetworkGlobals<E> {
             backfill_state: RwLock::new(BackFillState::Paused),
             sampling_subnets,
             sampling_columns,
-            connected_ipv4_peers: RwLock::new(0),
-            connected_ipv6_peers: RwLock::new(0),
             config,
             spec,
         }
@@ -124,16 +119,6 @@ impl<E: EthSpec> NetworkGlobals<E> {
     /// Returns the number of libp2p peers that are either connected or being dialed.
     pub fn connected_or_dialing_peers(&self) -> usize {
         self.peers.read().connected_or_dialing_peers().count()
-    }
-
-    /// Returns the number of connected peers with an incoming ipv4 connection.
-    pub fn connected_incoming_ipv4_peers(&self) -> usize {
-        *self.connected_ipv4_peers.read()
-    }
-
-    /// Returns the number of connected peers with an incoming ipv6 connection.
-    pub fn connected_incoming_ipv6_peers(&self) -> usize {
-        *self.connected_ipv6_peers.read()
     }
 
     /// Returns in the node is syncing.
