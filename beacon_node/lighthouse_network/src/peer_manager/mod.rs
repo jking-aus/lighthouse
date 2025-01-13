@@ -107,6 +107,8 @@ pub struct PeerManager<E: EthSpec> {
     metrics_enabled: bool,
     /// Keeps track of whether the QUIC protocol is enabled or not.
     quic_enabled: bool,
+    /// Threshold of inbound peers to consider libp2p NAT open.
+    libp2p_nat_open_threshold: usize,
     /// The logger associated with the `PeerManager`.
     log: slog::Logger,
 }
@@ -172,6 +174,7 @@ impl<E: EthSpec> PeerManager<E> {
             discovery_enabled,
             metrics_enabled,
             quic_enabled,
+            libp2p_nat_open_threshold: 3, // Default to 3 inbound peers to consider NAT open
             log: log.clone(),
         })
     }

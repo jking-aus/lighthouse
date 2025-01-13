@@ -122,6 +122,26 @@ impl<E: EthSpec> PeerInfo<E> {
         self.connection_direction.as_ref()
     }
 
+    /// Returns true if this is an incoming ipv4 connection.
+    pub fn is_incoming_ipv4_connection(&self) -> bool {
+        self.seen_multiaddrs.iter().any(|multiaddr| {
+            multiaddr.iter().any(|protocol| match protocol {
+                libp2p::core::multiaddr::Protocol::Ip4(_) => true,
+                _ => false,
+            })
+        })
+    }
+
+    /// Returns true if this is an incoming ipv6 connection.
+    pub fn is_incoming_ipv6_connection(&self) -> bool {
+        self.seen_multiaddrs.iter().any(|multiaddr| {
+            multiaddr.iter().any(|protocol| match protocol {
+                libp2p::core::multiaddr::Protocol::Ip6(_) => true,
+                _ => false,
+            })
+        })
+    }
+
     /// Returns the sync status of the peer.
     pub fn sync_status(&self) -> &SyncStatus {
         &self.sync_status
