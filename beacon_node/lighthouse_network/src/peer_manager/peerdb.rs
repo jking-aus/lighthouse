@@ -183,22 +183,6 @@ impl<E: EthSpec> PeerDB<E> {
         self.peers.iter().filter(|(_, info)| info.is_connected())
     }
 
-    /// Returns an iterator of all connected peers with an incoming ipv4 connection.
-    pub fn connected_incoming_ipv4_peers(&self) -> impl Iterator<Item = PeerId> + '_ {
-        self.peers
-            .iter()
-            .filter(|(_, info)| info.is_connected() && info.is_incoming_ipv4_connection())
-            .map(|(peer_id, _)| *peer_id)
-    }
-
-    /// Returns an iterator of all connected peers with an incoming ipv6 connection.
-    pub fn connected_incoming_ipv6_peers(&self) -> impl Iterator<Item = PeerId> + '_ {
-        self.peers
-            .iter()
-            .filter(|(_, info)| info.is_connected() && info.is_incoming_ipv6_connection())
-            .map(|(peer_id, _)| *peer_id)
-    }
-
     /// Gives the ids of all known connected peers.
     pub fn connected_peer_ids(&self) -> impl Iterator<Item = &PeerId> {
         self.peers
