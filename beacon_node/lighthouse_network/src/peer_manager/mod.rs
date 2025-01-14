@@ -1359,6 +1359,7 @@ impl<E: EthSpec> PeerManager<E> {
             if peer_info.is_incoming_ipv6_connection() {
                 inbound_ipv6_peers_connected += 1;
             }
+        }
 
         // Set ipv4 nat_open metric flag if threshold of peercount is met, unset if below threshold
         if inbound_ipv4_peers_connected >= self.libp2p_nat_open_threshold {
