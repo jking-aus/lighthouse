@@ -209,12 +209,13 @@ impl<E: EthSpec> NetworkBehaviour for PeerManager<E> {
             ));
         }
 
-        // We have an inbound connection, this is indicative of having our libp2p NAT ports open.
-        // We now need to check if we have enough open connections to consider our NAT open.
-        self.update_nat_open_metric(&ConnectedPoint::Listener {
-            send_back_addr: remote_addr.clone(),
-            local_addr: _local_addr.clone(),
-        });
+        // We have an inbound connection, this is indicative of having our libp2p NAT ports open. We
+        // distinguish between ipv4 and ipv6 here:
+        match remote_addr.iter().next() {
+            Some(Protocol::Ip4(_)) => set_gauge_vec(&NAT_OPEN, &["libp2p_ipv4"], 1),
+            Some(Protocol::Ip6(_)) => set_gauge_vec(&NAT_OPEN, &["libp2p_ipv6"], 1),
+            _ => {}
+        }
 
         Ok(ConnectionHandler)
     }
@@ -322,45 +323,7 @@ impl<E: EthSpec> PeerManager<E> {
             // Legacy standard metrics.
             metrics::inc_counter(&metrics::PEER_DISCONNECT_EVENT_COUNT);
 
-            self.update_nat_open_metric(endpoint);
             self.update_peer_count_metrics();
-        }
-    }
-    fn update_nat_open_metric(&mut self, endpoint: &ConnectedPoint) {
-        if let ConnectedPoint::Listener { send_back_addr, .. } = endpoint {
-            if let Some(addr) = send_back_addr.iter().next() {
-                match addr {
-                    Protocol::Ip4(_) => {
-                        if self
-                            .network_globals
-                            .peers
-                            .read()
-                            .connected_incoming_ipv4_peers()
-                            .count()
-                            <= self.libp2p_nat_open_threshold
-                        {
-                            set_gauge_vec(&NAT_OPEN, &["libp2p_ipv4"], 0);
-                        } else {
-                            set_gauge_vec(&NAT_OPEN, &["libp2p_ipv4"], 1);
-                        }
-                    }
-                    Protocol::Ip6(_) => {
-                        if self
-                            .network_globals
-                            .peers
-                            .read()
-                            .connected_incoming_ipv6_peers()
-                            .count()
-                            <= self.libp2p_nat_open_threshold
-                        {
-                            set_gauge_vec(&NAT_OPEN, &["libp2p_ipv6"], 0);
-                        } else {
-                            set_gauge_vec(&NAT_OPEN, &["libp2p_ipv6"], 1);
-                        }
-                    }
-                    _ => {}
-                }
-            }
         }
     }
 
