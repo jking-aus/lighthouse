@@ -290,7 +290,7 @@ impl<E: EthSpec> PeerManager<E> {
     fn on_connection_closed(
         &mut self,
         peer_id: PeerId,
-        endpoint: &ConnectedPoint,
+        _endpoint: &ConnectedPoint,
         remaining_established: usize,
     ) {
         if remaining_established > 0 {
