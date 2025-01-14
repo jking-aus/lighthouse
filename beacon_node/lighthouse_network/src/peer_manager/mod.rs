@@ -1350,23 +1350,28 @@ impl<E: EthSpec> PeerManager<E> {
                     .entry(meta_data.custody_subnet_count)
                     .or_default() += 1;
             }
-
+            // Check if incoming peer is ipv4
             if peer_info.is_incoming_ipv4_connection() {
                 inbound_ipv4_peers_connected += 1;
-                if inbound_ipv4_peers_connected >= self.libp2p_nat_open_threshold {
-                    metrics::set_gauge_vec(&metrics::NAT_OPEN, &["libp2p_ipv4"], 1);
-                } else {
-                    metrics::set_gauge_vec(&metrics::NAT_OPEN, &["libp2p_ipv4"], 0);
-                }
             }
+
+            // Check if incoming peer is ipv6
             if peer_info.is_incoming_ipv6_connection() {
                 inbound_ipv6_peers_connected += 1;
-                if inbound_ipv6_peers_connected >= self.libp2p_nat_open_threshold {
-                    metrics::set_gauge_vec(&metrics::NAT_OPEN, &["libp2p_ipv6"], 1);
-                } else {
-                    metrics::set_gauge_vec(&metrics::NAT_OPEN, &["libp2p_ipv6"], 0);
-                }
             }
+
+        // Set ipv4 nat_open metric flag if threshold of peercount is met, unset if below threshold
+        if inbound_ipv4_peers_connected >= self.libp2p_nat_open_threshold {
+            metrics::set_gauge_vec(&metrics::NAT_OPEN, &["libp2p_ipv4"], 1);
+        } else {
+            metrics::set_gauge_vec(&metrics::NAT_OPEN, &["libp2p_ipv4"], 0);
+        }
+
+        // Set ipv6 nat_open metric flag if threshold of peercount is met, unset if below threshold
+        if inbound_ipv6_peers_connected >= self.libp2p_nat_open_threshold {
+            metrics::set_gauge_vec(&metrics::NAT_OPEN, &["libp2p_ipv6"], 1);
+        } else {
+            metrics::set_gauge_vec(&metrics::NAT_OPEN, &["libp2p_ipv6"], 0);
         }
 
         // PEERS_CONNECTED
