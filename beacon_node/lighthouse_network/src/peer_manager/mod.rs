@@ -63,6 +63,8 @@ pub const MIN_OUTBOUND_ONLY_FACTOR: f32 = 0.2;
 /// limit is 55, and we are at 55 peers, the following parameter provisions a few more slots of
 /// dialing priority peers we need for validator duties.
 pub const PRIORITY_PEER_EXCESS: f32 = 0.2;
+/// The numbre of inbound libp2p peers we have seen before we consider our NAT to be open.
+pub const LIBP2P_NAT_OPEN_THRESHOLD: usize = 3;
 
 /// The main struct that handles peer's reputation and connection status.
 pub struct PeerManager<E: EthSpec> {
@@ -107,8 +109,6 @@ pub struct PeerManager<E: EthSpec> {
     metrics_enabled: bool,
     /// Keeps track of whether the QUIC protocol is enabled or not.
     quic_enabled: bool,
-    /// Threshold of inbound peers to consider libp2p NAT open.
-    libp2p_nat_open_threshold: usize,
     /// The logger associated with the `PeerManager`.
     log: slog::Logger,
 }
@@ -174,7 +174,6 @@ impl<E: EthSpec> PeerManager<E> {
             discovery_enabled,
             metrics_enabled,
             quic_enabled,
-            libp2p_nat_open_threshold: 3, // Default to 3 inbound peers to consider NAT open
             log: log.clone(),
         })
     }
@@ -1362,14 +1361,14 @@ impl<E: EthSpec> PeerManager<E> {
         }
 
         // Set ipv4 nat_open metric flag if threshold of peercount is met, unset if below threshold
-        if inbound_ipv4_peers_connected >= self.libp2p_nat_open_threshold {
+        if inbound_ipv4_peers_connected >= LIBP2P_NAT_OPEN_THRESHOLD {
             metrics::set_gauge_vec(&metrics::NAT_OPEN, &["libp2p_ipv4"], 1);
         } else {
             metrics::set_gauge_vec(&metrics::NAT_OPEN, &["libp2p_ipv4"], 0);
         }
 
         // Set ipv6 nat_open metric flag if threshold of peercount is met, unset if below threshold
-        if inbound_ipv6_peers_connected >= self.libp2p_nat_open_threshold {
+        if inbound_ipv6_peers_connected >= LIBP2P_NAT_OPEN_THRESHOLD {
             metrics::set_gauge_vec(&metrics::NAT_OPEN, &["libp2p_ipv6"], 1);
         } else {
             metrics::set_gauge_vec(&metrics::NAT_OPEN, &["libp2p_ipv6"], 0);
