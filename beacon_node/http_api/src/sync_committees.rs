@@ -13,6 +13,7 @@ use lighthouse_network::PubsubMessage;
 use network::NetworkMessage;
 use slot_clock::SlotClock;
 use std::cmp::max;
+use store::metadata::STATE_UPPER_LIMIT_NO_RETAIN;
 use std::collections::HashMap;
 use tokio::sync::mpsc::UnboundedSender;
 use tracing::{debug, error, warn};
@@ -114,11 +115,58 @@ fn duties_from_state_load<T: BeaconChainTypes>(
         // have to transition the head to start of the current period).
         //
         // We also need to ensure that the load slot is after the Altair fork.
-        let load_slot = max(
+        let sync_committee_start_slot = max(
             chain.spec.epochs_per_sync_committee_period * sync_committee_period.saturating_sub(1),
             altair_fork_epoch,
         )
         .start_slot(T::EthSpec::slots_per_epoch());
+
+        // Account for state availability when fetching sync committee duties.
+        // If the ideal slot (start of sync committee period) is not available due to
+        // checkpoint sync or state pruning, use the earliest available slot that still
+        // contains the same sync committee information.
+        let load_slot = {
+            let (_, historic_upper_limit) = chain.store.get_historic_state_limits();
+            if historic_upper_limit != STATE_UPPER_LIMIT_NO_RETAIN {
+                // Historical state retention is active - ensure we use an available slot
+                let proposed_slot = max(sync_committee_start_slot, historic_upper_limit);
+                
+                // Verify the proposed slot is still within the same sync committee period
+                let sync_committee_end_slot = (sync_committee_period * chain.spec.epochs_per_sync_committee_period)
+                    .start_slot(T::EthSpec::slots_per_epoch());
+                
+                if proposed_slot < sync_committee_end_slot {
+                    if proposed_slot != sync_committee_start_slot {
+                        debug!(
+                            ideal_slot = %sync_committee_start_slot,
+                            selected_slot = %proposed_slot,
+                            historic_upper_limit = %historic_upper_limit,
+                            sync_committee_period = %sync_committee_period,
+                            "Using alternative slot for sync committee duties due to state availability constraints"
+                        );
+                    }
+                    proposed_slot
+                } else {
+                    // The available state is beyond this sync committee period - cannot fulfill request
+                    warn!(
+                        ideal_slot = %sync_committee_start_slot,
+                        historic_upper_limit = %historic_upper_limit,
+                        sync_committee_end_slot = %sync_committee_end_slot,
+                        sync_committee_period = %sync_committee_period,
+                        "Cannot fulfill sync committee duties request: no available state within sync committee period"
+                    );
+                    return Err(Box::new(BeaconChainError::SyncDutiesError(
+                        BeaconStateError::SyncCommitteeNotKnown {
+                            current_epoch,
+                            epoch: request_epoch,
+                        },
+                    )));
+                }
+            } else {
+                // No historical state retention - use the ideal slot
+                sync_committee_start_slot
+            }
+        };
 
         let state = chain.state_at_slot(load_slot, StateSkipConfig::WithoutStateRoots)?;
 

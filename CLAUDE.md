@@ -97,7 +97,7 @@ Lighthouse is a modular Ethereum consensus client with two main components:
 
 ### Build System Notes
 
-- Uses Cargo workspace with 90+ member crates
+- Uses Cargo workspace with 90+ member crates organized into logical groupings
 - Supports multiple Ethereum specifications via feature flags (`gnosis`, `spec-minimal`)
 - Cross-compilation support for Linux x86_64, ARM64, and RISC-V
 - Multiple build profiles: `release`, `maxperf`, `reproducible`
@@ -295,4 +295,4 @@ async fn process_block(&self, block: Block) -> Result<(), Error> {
 - Use `cargo check` for faster iteration during development and always run after code changes
 - Prefer targeted package tests (`cargo test -p <package>`) and individual tests over full test suite when debugging specific issues
 - Always understand the broader codebase patterns before making changes
-- Minimum Supported Rust Version (MSRV) is documented in `lighthouse/Cargo.toml` - ensure Rust version meets or exceeds this requirement
+- Minimum Supported Rust Version (MSRV) is 1.88.0+ as documented in `lighthouse/Cargo.toml` - ensure Rust version meets or exceeds this requirement
