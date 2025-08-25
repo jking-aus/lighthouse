@@ -132,7 +132,7 @@ fn duties_from_state_load<T: BeaconChainTypes>(
                 let proposed_slot = max(sync_committee_start_slot, historic_upper_limit);
                 
                 // Verify the proposed slot is still within the same sync committee period
-                let sync_committee_end_slot = (sync_committee_period * chain.spec.epochs_per_sync_committee_period)
+                let sync_committee_end_slot = Epoch::new(sync_committee_period * chain.spec.epochs_per_sync_committee_period.as_u64())
                     .start_slot(T::EthSpec::slots_per_epoch());
                 
                 if proposed_slot < sync_committee_end_slot {

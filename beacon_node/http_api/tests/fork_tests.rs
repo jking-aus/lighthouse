@@ -29,6 +29,10 @@ fn capella_spec(capella_fork_epoch: Epoch) -> ChainSpec {
     spec
 }
 
+
+
+
+
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn sync_committee_duties_across_fork() {
     let validator_count = E::sync_committee_size();
